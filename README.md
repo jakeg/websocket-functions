@@ -24,6 +24,6 @@ ws.publish('blah', 'yes')
 // assume ws.funcAll not going to be used
 server.publish('blah', 'yes')
 // becomes
-ws.procAll('blah', 'funcName', 'yes')
-server.publish('blah', 'yes')
+ws.publishProc('blah', 'funcName', 'yes')
+server.publishProc('blah', 'yes')
 ```
