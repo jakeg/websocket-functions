@@ -10,7 +10,7 @@ export function rpc (handlers, ws, server) {
     ws.rpcMessageHandler = (msg) => messageReceived(handlers, msg, ws)
     ws.publishProc = (room, func, data) => publishProc(room, func, data, ws)
   } else {
-    ws.onmessage = (msg) => messageReceived(handlers, msg.data, ws)
+    ws.addEventListener('message', (msg) => messageReceived(handlers, msg.data, ws))
   }
 }
 

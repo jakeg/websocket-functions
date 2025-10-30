@@ -8,3 +8,7 @@ ws.onopen = async () => {
   ws.proc('doThing')
   console.log(await ws.func('randomColour', 'blue'))
 }
+
+ws.addEventListener('message', (msg) => {
+  console.log('message', msg.data)
+})
