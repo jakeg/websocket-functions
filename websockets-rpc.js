@@ -9,6 +9,7 @@ let pendingFuncs = {}
 let payload = (args) => JSON.stringify({ jsonrpc: '2.0', ...args })
 
 export function wsRpcClient (ws, handlers) {
+  handlers = handlers || {}
   ws.proc = (method, data) => remoteProc(method, data, ws)
   ws.func = (method, data) => remoteFunc(method, data, ws)
   ws.addEventListener('message', (msg) => messageReceived(handlers, msg.data, ws))

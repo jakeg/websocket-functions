@@ -34,6 +34,8 @@ let server = wsRpcServer(Bun.serve, handlers, {
     '/ws': (req) => server.upgrade(req)
   }
 })
+
+console.log(`Server listening at ${server.url}`)
 ```
 
 ---
