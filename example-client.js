@@ -1,13 +1,13 @@
-import { rpc } from './websockets-rpc.js'
+import { wsRpcClient } from './websockets-rpc.js'
 import * as handlers from './handlers.js'
 
-let ws = new WebSocket('ws://localhost:3000/ws')
-rpc(handlers, ws) // adds .proc .func, handles messages etc
+let ws = wsRpcClient(new WebSocket('ws://localhost:3000/ws'), handlers)
 
 ws.onopen = async () => {
   ws.proc('doThing')
   console.log(await ws.func('randomColour', 'blue'))
   ws.send('hello')
+  setInterval(() => ws.proc('doThing', 'yes'), 1_000)
 }
 
 ws.addEventListener('message', (msg) => {

@@ -1,65 +1,67 @@
-What if run functions and procedures remotely?
+# WebSockets RPC
 
-On the client:
+Abstract away WebSockets messages and just call methods (procedures as well as functions which have return values) remotely via RPC (remote procedure call).
+
+Works with Bun (server and clients) and web clients.
+
+For clients (web or Bun):
 
 ```js
-import { rpc } from './websockets-rpc.js'
-// import * as handlers from './handlers.js' // suggest importing handlers
+import { wsRpcClient } from 'websockets-rpc'
 
+// these functions can be called from the server
 let handlers = {
-  doThing: (data) => console.log('hello', data)
+  logMsg: (msg) => console.log('Your message:', msg),
+  addNums: (nums) => nums.reduce((acc, v) => acc + v, 0)
 }
 
-let ws = new WebSocket('ws://localhost:3000/ws')
-rpc(handlers, ws) // adds .proc .func, handles messages etc
+let ws = wsRpcClient(new WebSocket('ws://localhost:3000/ws'), handlers)
+```
 
-ws.onopen = async () => {
+For servers (only Bun currently supported):
 
-  // runs procedure doThing() on server
-  ws.proc('doThing')
+```js
+import { wsRpcServer } from 'websockets-rpc'
 
-  // runs function randomColour() on server, and gets returned value
-  console.log(await ws.func('randomColour', 'blue'))
-
+// these functions can be called by clients
+let handlers = {
+  logMsg: (msg) => console.log('Your message:', msg),
+  addNums: (nums) => nums.reduce((acc, v) => acc + v, 0)
 }
 
-// can still bind other message handlers (ignore ones starting "rpc-")
-ws.addEventListener('message', (msg) => {
-  console.log('message', msg.data)
+let server = wsRpcServer(Bun.serve, handlers, {
+  routes: {
+    '/ws': (req) => server.upgrade(req)
+  }
 })
 ```
 
-And on the server:
+---
+
+Make RPC calls from either client or server over a connected WebSocket:
 
 ```js
-import { rpc, rpcServer } from './websockets-rpc.js'
-// import * as handlers from './handlers.js' // suggest importing handlers
+// from a client or the server
 
-let handlers = {
-  doThing: (data) => console.log('hello', data)
-}
+// run logMsg() on the other side
+ws.proc('logMsg')
 
-let server = Bun.serve({
-  routes: {
-    '/ws': (req) => server.upgrade(req, { data: {} })
-  },
-  websocket: {
-    async open (ws) {
-      rpc(handlers, ws, true) // need this
-      ws.subscribe('everyone')
-      ws.publishProc('everyone', 'coords', { x: 5, y: 10 })
-      console.log(await ws.func('addNums', [3, 6]))
-    },
-    message (ws, message) {
-      ws.rpcMessageHandler(message) // also need this
-      console.log('message', message)
-    }
-  }
-})
+// run addNums() on the other side
+// ... and get a return value back
+let sum = await ws.func('addNums', [5, 7])
+console.log(sum)
+```
 
-rpcServer(server) // also need this
+Note that `ws.proc()` runs a _procedure_ and does not receive a return value, while `ws.func()` runs a _function_ and needs to `await` a return value. These methods run on the other side - ie if calling from the server, will run on the client, and vice-versa.
 
-setInterval(() => server.publishProc('everyone', 'doThing', [3, 5, 7]), 1_000)
+---
 
-console.log(`Server listening on ${server.url}`)
+Use Bun's `pub/sub` to run a procedure on all clients subscribed to a room/channel:
+
+```js
+// run on all clients in 'some-room' (excluding ws itself)
+ws.publishProc('some-room', 'addNums', [5, 7])
+
+// run on all clients in 'some-room' (including ws itself)
+server.publishProc('some-room', 'AddNums', [5, 7])
 ```
