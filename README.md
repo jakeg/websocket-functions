@@ -4,7 +4,59 @@ Abstract away WebSockets messages and just call methods (procedures as well as f
 
 Works with Bun (server and clients) and web clients.
 
+## Install
+
+```bash
+bun install websockets-rpc
+```
+
+## Quick start
+
+For servers (only Bun currently supported):
+
+```js
+import { wsRpcServer } from 'websockets-rpc'
+
+// these methods can be called by clients
+let handlers = {
+  logMsg: (msg) => console.log('Your message:', msg),
+  addNums: (nums) => nums.reduce((acc, v) => acc + v, 0)
+}
+
+let server = wsRpcServer(Bun.serve, handlers, {
+  routes: {
+    '/ws': (req) => server.upgrade(req),
+    // ... other routes
+  }
+})
+
+console.log(`Server listening at ${server.url}`)
+```
+
+---
+
 For clients (web or Bun):
+
+```js
+import { wsRpcClient } from 'websockets-rpc'
+
+let ws = wsRpcClient(new WebSocket('ws://localhost:3000/ws'))
+
+ws.onopen = async () => {
+
+  // run a procedure that doesn't have a return value
+  ws.proc('logMsg', 'From client, running on server')
+
+  // run a function and do something with the value returned
+  console.log(await ws.func('addNums', [3, 5]))
+}
+```
+
+Note that `ws.proc()` runs a _procedure_ and does not receive a return value, while `ws.func()` runs a _function_ and needs to `await` a return value.
+
+---
+
+Clients can also have handlers which can be called from the server:
 
 ```js
 import { wsRpcClient } from 'websockets-rpc'
@@ -15,13 +67,30 @@ let handlers = {
   addNums: (nums) => nums.reduce((acc, v) => acc + v, 0)
 }
 
+// pass the handlers as the optional 2nd argument to wsRpcClient()
 let ws = wsRpcClient(new WebSocket('ws://localhost:3000/ws'), handlers)
 ```
 
-For servers (only Bun currently supported):
+---
+
+Use Bun's `pub/sub` on the server to run a procedure on all clients subscribed to a room/channel:
 
 ```js
+// run on all clients in 'some-room' (excluding ws itself)
+ws.publishProc('some-room', 'addNums', [5, 7])
+
+// run on all clients in 'some-room' (including ws itself)
+server.publishProc('some-room', 'AddNums', [5, 7])
+```
+
+# Bun server with web client example
+
+Put these 3 files in the same folder
+
+`server.js`:
+```js
 import { wsRpcServer } from 'websockets-rpc'
+import clientPage from './client.html'
 
 // these functions can be called by clients
 let handlers = {
@@ -31,6 +100,7 @@ let handlers = {
 
 let server = wsRpcServer(Bun.serve, handlers, {
   routes: {
+    '/': clientPage,
     '/ws': (req) => server.upgrade(req)
   }
 })
@@ -38,32 +108,29 @@ let server = wsRpcServer(Bun.serve, handlers, {
 console.log(`Server listening at ${server.url}`)
 ```
 
----
-
-Make RPC calls from either client or server over a connected WebSocket:
-
-```js
-// from a client or the server
-
-// run logMsg() on the other side
-ws.proc('logMsg')
-
-// run addNums() on the other side
-// ... and get a return value back
-let sum = await ws.func('addNums', [5, 7])
-console.log(sum)
+`client.html`:
+```html
+<!doctype html>
+<title>Example RPC client</title>
+<style>pre { display: inline; background: #eee; padding: 5px; }</style>
+<div>Try eg <pre>ws.proc('logMsg', 'Hello world')</pre> or <pre>await ws.func('addNums', [3, 5])</pre> in the console.</div>
+<script type="module" src="client.js"></script>
 ```
 
-Note that `ws.proc()` runs a _procedure_ and does not receive a return value, while `ws.func()` runs a _function_ and needs to `await` a return value. These methods run on the other side - ie if calling from the server, will run on the client, and vice-versa.
-
----
-
-Use Bun's `pub/sub` to run a procedure on all clients subscribed to a room/channel:
-
+`client.js`:
 ```js
-// run on all clients in 'some-room' (excluding ws itself)
-ws.publishProc('some-room', 'addNums', [5, 7])
+import { wsRpcClient } from 'websockets-rpc'
 
-// run on all clients in 'some-room' (including ws itself)
-server.publishProc('some-room', 'AddNums', [5, 7])
+globalThis.ws = wsRpcClient(new WebSocket('ws://localhost:3000/ws'))
+
+ws.onopen = async () => {
+
+  // run a procedure that doesn't have a return value
+  ws.proc('logMsg', 'From client, running on server')
+
+  // run a function and do something with the value returned
+  console.log(await ws.func('addNums', [3, 5]))
+}
 ```
+
+Start the server with `bun server.js` then open in a browser and in the developer tools console run eg `await ws.func('addNums', [3, 5])`.
