@@ -6,8 +6,8 @@
   - remember to export any functions you want to use
 */
 
-export function doThing () {
-  console.log('doing thing')
+export function doThing (data) {
+  console.log('doing thing', data)
 }
 
 export function addNums (nums) {

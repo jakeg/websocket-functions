@@ -1,15 +1,28 @@
 let nextFuncId = 1
 let pendingFuncs = {}
 
-export function rpc (handlers, ws) {
+export function rpc (handlers, ws, server) {
   ws.proc = (func, data) => remoteProc(func, data, ws)
   ws.func = (func, data) => remoteFunc(func, data, ws)
-  ws.onmessage = (msg) => messageReceived(handlers, msg.data, ws)
-  ws.rpcMessageHandler = (msg) => messageReceived(handlers, msg, ws)
+  if (server) {
+    ws.rpcMessageHandler = (msg) => messageReceived(handlers, msg, ws)
+    ws.publishProc = (room, func, data) => publishProc(room, func, data, ws)
+  } else {
+    ws.onmessage = (msg) => messageReceived(handlers, msg.data, ws)
+  }
+}
+
+export function rpcServer (server) {
+  server.publishProc = (room, func, data) => publishProc(room, func, data, server)
 }
 
 function remoteProc (func, data, ws) {
   ws.send(JSON.stringify({ func, data }))
+}
+
+function publishProc (room, func, data, wsOrServer) {
+  // console.log({room, func, data, wsOrServer})
+  wsOrServer.publish(room, JSON.stringify({ func, data }))
 }
 
 async function remoteFunc (func, data, ws) {
@@ -20,7 +33,6 @@ async function remoteFunc (func, data, ws) {
   })
 }
 
-// handle a message received
 function messageReceived (handlers, message, ws) {
   let func, data, id, ret
   try {
