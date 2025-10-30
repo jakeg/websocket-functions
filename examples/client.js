@@ -1,4 +1,4 @@
-import { wsRpcClient } from './websockets-rpc.js'
+import { wsRpcClient } from 'websockets-rpc'
 import * as handlers from './handlers.js'
 
 let ws = wsRpcClient(new WebSocket('ws://localhost:3000/ws'), handlers)

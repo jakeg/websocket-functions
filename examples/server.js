@@ -1,4 +1,4 @@
-import { wsRpcServer } from './websockets-rpc.js'
+import { wsRpcServer } from 'websockets-rpc'
 import * as handlers from './handlers.js'
 
 let server = wsRpcServer(Bun.serve, handlers, {

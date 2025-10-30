@@ -1,8 +1,8 @@
 {
   "name": "websockets-rpc",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "Run functions over WebSockets",
-  "main": "websockets-rpc.js",
+  "main": "index.js",
   "type": "module",
   "keywords": [
     "json",
