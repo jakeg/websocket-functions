@@ -7,8 +7,9 @@ rpc(handlers, ws) // adds .proc .func, handles messages etc
 ws.onopen = async () => {
   ws.proc('doThing')
   console.log(await ws.func('randomColour', 'blue'))
+  ws.send('hello')
 }
 
 ws.addEventListener('message', (msg) => {
-  console.log('message', msg.data)
+  // console.log('message', msg.data)
 })

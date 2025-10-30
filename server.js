@@ -14,7 +14,7 @@ let server = Bun.serve({
     },
     message (ws, message) {
       ws.rpcMessageHandler(message)
-      console.log('message', message)
+      // console.log('message', message)
     }
   }
 })
