@@ -6,5 +6,13 @@
   "type": "module",
   "keywords": ["json", "rpc", "websockets"],
   "author": "Jake Gordon",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jakeg/websockets-rpc.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jakeg/websockets-rpc/issues"
+  },
+  "homepage": "https://github.com/jakeg/websockets-rpc"
 }
