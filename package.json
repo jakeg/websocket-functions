@@ -1,10 +1,14 @@
 {
   "name": "websockets-rpc",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Run functions over WebSockets",
   "main": "websockets-rpc.js",
   "type": "module",
-  "keywords": ["json", "rpc", "websockets"],
+  "keywords": [
+    "json",
+    "rpc",
+    "websockets"
+  ],
   "author": "Jake Gordon",
   "license": "MIT",
   "repository": {
