@@ -9,8 +9,8 @@ let pendingFuncs = {}
 let payload = (args) => JSON.stringify({ jsonrpc: '2.0', ...args })
 
 export function wsClient (ws, handlers = {}) {
-  ws.proc = (method, data) => remoteProc(method, data, ws)
-  ws.func = (method, data) => remoteFunc(method, data, ws)
+  ws.proc = (method, params) => remoteProc(method, params, ws)
+  ws.func = (method, params, timeout = 30_000) => remoteFunc(method, params, timeout, ws)
   ws.addEventListener('message', (msg) => messageReceived(handlers, msg.data, ws))
   return ws
 }
@@ -22,7 +22,7 @@ export function wsServer (serve, handlers, opt) {
   let origMessage = opt.websocket.message
   opt.websocket.open = (ws) => {
     ws.proc = (method, params) => remoteProc(method, params, ws)
-    ws.func = (method, params) => remoteFunc(method, params, ws)
+    ws.func = (method, params, timeout = 30_000) => remoteFunc(method, params, timeout, ws)
     ws.publishProc = (room, method, params) => publishProc(room, method, params, ws)
     if (origOpen) origOpen(ws)
   }
@@ -43,34 +43,44 @@ function publishProc (room, method, params, wsOrServer) {
   wsOrServer.publish(room, payload({ method, params }))
 }
 
-async function remoteFunc (method, params, ws) {
-  return new Promise ((resolve) => {
+async function remoteFunc (method, params, timeout, ws) {
+  return new Promise ((resolve, reject) => {
     let id = nextFuncId++
-    pendingFuncs[id] = { resolve }
+    pendingFuncs[id] = { resolve, reject }
+    setTimeout(() => {
+      if (id in pendingFuncs) {
+        delete pendingFuncs[id]
+        reject(new Error('remoteFunc() timed out'))
+      }
+    }, timeout)
     ws.send(payload({ method, params, id }))
   })
 }
 
-function messageReceived (handlers, message, ws) {
-  let jsonrpc, method, params, id, result
+async function messageReceived (handlers, message, ws) {
+  let jsonrpc, method, params, id, result, error
   try {
-    ({ jsonrpc, method, params, id, result } = JSON.parse(message))
+    ({ jsonrpc, method, params, id, result, error } = JSON.parse(message))
   } catch { }
   if (jsonrpc) {
     if (!method && id) {
       // return value from from remote function
-      pendingFuncs[id]?.resolve(result)
-      delete pendingFuncs[id]
+      if (id in pendingFuncs) {
+        if (error) pendingFuncs[id]?.reject(new Error(error.message))
+        else pendingFuncs[id]?.resolve(result)
+        delete pendingFuncs[id]
+      }
     } else if (method) {
-      if (handlers[method]) {
+      if (method in handlers) {
         // run a function or procedure
         let result = handlers[method](params, ws)
+        if (result instanceof Promise) result = await result
         if (id) {
           // a function, so send back returned value
           ws.send(payload({ id, result }))
         }
       } else {
-        console.error(`No method "${method}"`, message)
+        ws.send(payload({ id, error: { code: -32601, message: 'Method not found' } }))
       }
     }
   }

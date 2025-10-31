@@ -83,7 +83,7 @@ Use Bun's `pub/sub` on the server to run a function on all clients subscribed to
 ws.publishProc('some-room', 'addNums', [5, 7])
 
 // run on all clients in 'some-room' (including ws itself)
-server.publishProc('some-room', 'AddNums', [5, 7])
+server.publishProc('some-room', 'addNums', [5, 7])
 ```
 
 ## Bun server with web client example
@@ -183,7 +183,7 @@ export function logMsg (msg) {
 }
 
 export function addNums (nums) {
-  return nums.reduce((acc, v) =. acc + v, 0)
+  return nums.reduce((acc, v) => acc + v, 0)
 }
 
 export function logName (_, ws) {
@@ -206,15 +206,17 @@ If called with `ws.func()` as opposed to `ws.proc()` be sure to provide a `retur
 
 ### `ws.proc(method, params)`
 
-When called from the client, will invoke the given `method` on the server, and vice-versa.
+When called from the client, will invoke the given handler `method` on the server, and vice-versa.
 
 Does not receive a return value, unlike `ws.func()`.
 
-### `await ws.func(method, params)`
+### `await ws.func(method, params, timeout)`
 
-When called from the client, will invoke the given `method` on the server, and vice-versa.
+When called from the client, will invoke the given handler `method` on the server, and vice-versa.
 
 An asynchronous function which returns a `Promise` which you should `await`. Once the other side of the WebSocket connection has a return value from the function, it will be sent back over the WebSocket connection and the `Promise` will resolve.
+
+The `Promise` will `reject()` if a response isn't received within `timeout` (default: `30_000`ms).
 
 Use `ws.proc()` as opposed to `ws.func()` when your method has no return value to prevent an unnecessary message being exchanged.
 
@@ -228,6 +230,6 @@ As per `ws.publishProc()`, but for all subscribers to `room` (while `ws.publishP
 
 ## About
 
-Provides an incomplete implementation of [JSON-RPC 2.0](https://www.jsonrpc.org/specification) - exchanges JSON messags over WebSocket connections with property `{ jsonrpc: '2.0' }`.
+Provides an incomplete implementation of [JSON-RPC 2.0](https://www.jsonrpc.org/specification) - exchanges JSON messages over WebSocket connections with property `{ jsonrpc: '2.0' }`.
 
 While HTTP provides _requests_ and associated _responses_, WebSockets only provides _messages_. This modules gives each message a unique `id` so when a message is sent back as a response (to provide a `return` value for a function) it can be associated with the outgoing message.
