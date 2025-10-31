@@ -1,7 +1,7 @@
-import { wsRpcServer } from 'websockets-rpc'
+import { wsServer } from 'websocket-functions'
 import * as handlers from './handlers.js'
 
-let server = wsRpcServer(Bun.serve, handlers, {
+let server = wsServer(Bun.serve, handlers, {
   routes: {
     '/ws': (req) => server.upgrade(req, { data: {} })
   },

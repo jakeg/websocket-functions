@@ -1,4 +1,4 @@
-# WebSockets RPC
+# WebSocket Functions
 
 Abstract away WebSockets messages and just call methods (procedures as well as functions which have return values) remotely via RPC (remote procedure call).
 
@@ -7,7 +7,7 @@ Works with Bun (server and clients) and web clients.
 ## Install
 
 ```bash
-bun install websockets-rpc
+bun install websocket-functions
 ```
 
 ## Quick start
@@ -15,7 +15,7 @@ bun install websockets-rpc
 For servers (only Bun currently supported):
 
 ```js
-import { wsRpcServer } from 'websockets-rpc'
+import { wsServer } from 'websocket-functions'
 
 // these methods can be called by clients
 let handlers = {
@@ -23,7 +23,7 @@ let handlers = {
   addNums: (nums) => nums.reduce((acc, v) => acc + v, 0)
 }
 
-let server = wsRpcServer(Bun.serve, handlers, {
+let server = wsServer(Bun.serve, handlers, {
   routes: {
     '/ws': (req) => server.upgrade(req),
     // ... other routes
@@ -38,9 +38,9 @@ console.log(`Server listening at ${server.url}`)
 For clients (web or Bun):
 
 ```js
-import { wsRpcClient } from 'websockets-rpc'
+import { wsClient } from 'websocket-functions'
 
-let ws = wsRpcClient(new WebSocket('ws://localhost:3000/ws'))
+let ws = wsClient(new WebSocket('ws://localhost:3000/ws'))
 
 ws.onopen = async () => {
 
@@ -59,7 +59,7 @@ Note that `ws.proc()` runs a _procedure_ and does not receive a return value, wh
 Clients can also have handlers which can be called from the server:
 
 ```js
-import { wsRpcClient } from 'websockets-rpc'
+import { wsClient } from 'websocket-functions'
 
 // these functions can be called from the server
 let handlers = {
@@ -68,7 +68,7 @@ let handlers = {
 }
 
 // pass the handlers as the optional 2nd argument to wsRpcClient()
-let ws = wsRpcClient(new WebSocket('ws://localhost:3000/ws'), handlers)
+let ws = wsClient(new WebSocket('ws://localhost:3000/ws'), handlers)
 ```
 
 ---
@@ -89,7 +89,7 @@ Put these 3 files in the same folder
 
 `server.js`:
 ```js
-import { wsRpcServer } from 'websockets-rpc'
+import { wsServer } from 'websocket-functions'
 import clientPage from './client.html'
 
 // these functions can be called by clients
@@ -98,7 +98,7 @@ let handlers = {
   addNums: (nums) => nums.reduce((acc, v) => acc + v, 0)
 }
 
-let server = wsRpcServer(Bun.serve, handlers, {
+let server = wsServer(Bun.serve, handlers, {
   routes: {
     '/': clientPage,
     '/ws': (req) => server.upgrade(req)
@@ -119,9 +119,9 @@ console.log(`Server listening at ${server.url}`)
 
 `client.js`:
 ```js
-import { wsRpcClient } from 'websockets-rpc'
+import { wsClient } from 'websocket-functions'
 
-globalThis.ws = wsRpcClient(new WebSocket('ws://localhost:3000/ws'))
+globalThis.ws = wsClient(new WebSocket('ws://localhost:3000/ws'))
 
 ws.onopen = async () => {
 

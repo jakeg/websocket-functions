@@ -1,22 +1,26 @@
 {
-  "name": "websockets-rpc",
-  "version": "1.0.3",
+  "name": "websocket-functions",
+  "version": "1.0.0",
   "description": "Run functions over WebSockets",
   "main": "index.js",
   "type": "module",
   "keywords": [
     "json",
     "rpc",
+    "websocket",
+    "ws",
+    "client",
+    "server",
     "websockets"
   ],
   "author": "Jake Gordon",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jakeg/websockets-rpc.git"
+    "url": "git+https://github.com/jakeg/websocket-functions.git"
   },
   "bugs": {
-    "url": "https://github.com/jakeg/websockets-rpc/issues"
+    "url": "https://github.com/jakeg/websocket-functions/issues"
   },
-  "homepage": "https://github.com/jakeg/websockets-rpc"
+  "homepage": "https://github.com/jakeg/websocket-functions"
 }

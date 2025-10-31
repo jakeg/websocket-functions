@@ -8,7 +8,7 @@ let pendingFuncs = {}
 
 let payload = (args) => JSON.stringify({ jsonrpc: '2.0', ...args })
 
-export function wsRpcClient (ws, handlers) {
+export function wsClient (ws, handlers) {
   handlers = handlers || {}
   ws.proc = (method, data) => remoteProc(method, data, ws)
   ws.func = (method, data) => remoteFunc(method, data, ws)
@@ -17,7 +17,7 @@ export function wsRpcClient (ws, handlers) {
 }
 
 // returns a Bun server with all the RPC thrown in
-export function wsRpcServer (serve, handlers, opt) {
+export function wsServer (serve, handlers, opt) {
   if (!opt.websocket) opt.websocket = {}
   let origOpen = opt.websocket.open
   let origMessage = opt.websocket.message

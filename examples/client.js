@@ -1,7 +1,7 @@
-import { wsRpcClient } from 'websockets-rpc'
+import { wsClient } from 'websocket-functions'
 import * as handlers from './handlers.js'
 
-let ws = wsRpcClient(new WebSocket('ws://localhost:3000/ws'), handlers)
+let ws = wsClient(new WebSocket('ws://localhost:3000/ws'), handlers)
 
 ws.onopen = async () => {
   ws.proc('doThing')
