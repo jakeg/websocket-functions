@@ -4,7 +4,9 @@ Abstract away the indirect nature of WebSocket messages by invoking remote funct
 
 Just `let sum = await ws.func('addNums', [3, 5])` and get a return value back over a WebSocket connection.
 
-Works with Bun (server and clients) and web clients. Under 3KB. No dependencies.
+Works with Bun (server and clients) and web clients.
+
+Under 3KB. Single file. No dependencies.
 
 ## Install
 
@@ -219,7 +221,11 @@ Use `ws.proc()` as opposed to `ws.func()` when your method has no return value t
 
 ### `ws.publishProc(room, method, params)`
 
-Only available from servers, uses Bun's `ws.publish()` method to to invoke a function on all clients subscribed to the `room` channel.
+Only available from servers, uses Bun's `ws.publish()` method to to invoke `method` on all clients subscribed to the `room` channel (other than `ws` themselves). Does not receive a return value.
+
+### `server.publishProc(room, method, params)`
+
+As per `ws.publishProc()`, but for all subscribers to `room` (while `ws.publishProc()` doesn't send to self). `server` is a Bun server object.
 
 ## About
 
