@@ -24,9 +24,8 @@ For servers (only Bun currently supported):
 ```js
 import { wsServer } from 'websocket-functions'
 
-// these methods can be called by clients
+// these functions can be called by clients
 let handlers = {
-  logMsg: (msg) => console.log('Your message:', msg),
   addNums: (nums) => nums.reduce((acc, v) => acc + v, 0)
 }
 
@@ -50,16 +49,12 @@ import { wsClient } from 'websocket-functions'
 let ws = wsClient(new WebSocket('ws://localhost:3000/ws'))
 
 ws.onopen = async () => {
-
-  // run a procedure that doesn't have a return value
-  ws.proc('logMsg', 'From client, running on server')
-
-  // run a function and do something with the value returned
-  console.log(await ws.func('addNums', [3, 5]))
+  let sum = await ws.func('addNums', [3, 5])
+  console.log(sum)
 }
 ```
 
-Note that `ws.proc()` runs a _procedure_ and does not receive a return value, while `ws.func()` runs a _function_ and should `await` a return value.
+You can also use `ws.proc('funcName', params)` if no return value is needed.
 
 ---
 
@@ -70,7 +65,6 @@ import { wsClient } from 'websocket-functions'
 
 // these functions can be called from the server
 let handlers = {
-  logMsg: (msg) => console.log('Your message:', msg),
   addNums: (nums) => nums.reduce((acc, v) => acc + v, 0)
 }
 
@@ -80,7 +74,7 @@ let ws = wsClient(new WebSocket('ws://localhost:3000/ws'), handlers)
 
 ---
 
-Use Bun's `pub/sub` on the server to run a procedure on all clients subscribed to a room/channel:
+Use Bun's `pub/sub` on the server to run a function on all clients subscribed to a room/channel:
 
 ```js
 // run on all clients in 'some-room' (excluding ws itself)
