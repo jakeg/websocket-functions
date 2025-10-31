@@ -1,8 +1,11 @@
 # WebSocket Functions
 
-Abstract away the indirect nature of WebSocket messages by invoking remote functions.
+```js
+let sum = await ws.func('addNums', [3, 5])
+```
+...and get the return value back over a WebSocket connection.
 
-Just `let sum = await ws.func('addNums', [3, 5])` and get a return value back over a WebSocket connection.
+Abstract away those pesky messages and just invoke remote functions.
 
 Works with Bun (server and clients) and web clients.
 
