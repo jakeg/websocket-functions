@@ -17,6 +17,8 @@ Under 3KB. Single file. No dependencies.
 bun install websocket-functions
 ```
 
+... or just copy the tiny `index.js` file into your project.
+
 ## Quick start
 
 For servers (only Bun currently supported):
