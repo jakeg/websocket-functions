@@ -73,25 +73,28 @@ async function messageReceived (handlers, message, ws) {
     ({ jsonrpc, method, params, id, result, error } = JSON.parse(message))
   } catch { }
   if (jsonrpc) {
-    if (!method && id) {
-      // return value from from remote function
-      if (id in ws.pendingFuncs) {
-        if (error) ws.pendingFuncs[id]?.reject(new Error(error.message))
-        else ws.pendingFuncs[id]?.resolve(result)
-        delete ws.pendingFuncs[id]
-      }
-    } else if (method) {
-      if (method in handlers) {
-        try {
-          // run a function (will have an id) or procedure
-          let result = await handlers[method](params, ws)
-          if (id) ws.send(payload({ id, result }))
-        } catch (err) {
-          if (id) ws.send(payload({ id, error: { code: -32000, message: err.message } }))
+    try {
+      if (!method && id) {
+        // return value from from remote function
+        if (id in ws.pendingFuncs) {
+          if (error) ws.pendingFuncs[id]?.reject(new Error(error.message))
+          else ws.pendingFuncs[id]?.resolve(result)
+          delete ws.pendingFuncs[id]
         }
-      } else {
-        ws.send(payload({ id, error: { code: -32601, message: 'Method not found' } }))
+      } else if (method) {
+        if (method in handlers) {
+          // run a function (will have an id) or procedure
+          try { result = await handlers[method](params, ws) }
+          catch (err) {
+            if (id) ws.send(payload({ id, error: { code: -32000, message: err.message } }))
+          }
+          if (id) ws.send(payload({ id, result }))
+        } else {
+          ws.send(payload({ id, error: { code: -32601, message: 'Method not found' } }))
+        }
       }
+    } catch (err) {
+      console.error('Error processing JSON-RPC message:', message, err)
     }
   }
 }
