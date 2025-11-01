@@ -3,7 +3,9 @@
 // https://en.wikipedia.org/wiki/JSON-RPC
 // https://www.jsonrpc.org/specification
 
-let payload = (args) => JSON.stringify({ jsonrpc: '2.0', ...args })
+function payload (args) {
+  return JSON.stringify({ jsonrpc: '2.0', ...args })
+}
 
 export function wsClient (ws, handlers = {}) {
   ws.proc = (method, params) => remoteProc(method, params, ws)
@@ -45,13 +47,22 @@ async function remoteFunc (method, params, timeout, ws) {
   if (!ws.pendingFuncs) ws.pendingFuncs = {}
   return new Promise((resolve, reject) => {
     let id = ws.nextFuncId++
-    ws.pendingFuncs[id] = { resolve, reject }
-    setTimeout(() => {
-      if (id in ws?.pendingFuncs) {
+    let timer = setTimeout(() => {
+      if (id in ws.pendingFuncs) {
         delete ws.pendingFuncs[id]
         reject(new Error('remoteFunc() timed out'))
       }
     }, timeout)
+    ws.pendingFuncs[id] = {
+      resolve: v => {
+        clearTimeout(timer)
+        resolve(v)
+      },
+      reject: e => {
+        clearTimeout(timer)
+        reject(e)
+      }
+    }
     ws.send(payload({ method, params, id }))
   })
 }
@@ -64,7 +75,7 @@ async function messageReceived (handlers, message, ws) {
   if (jsonrpc) {
     if (!method && id) {
       // return value from from remote function
-      if (id in ws?.pendingFuncs) {
+      if (id in ws.pendingFuncs) {
         if (error) ws.pendingFuncs[id]?.reject(new Error(error.message))
         else ws.pendingFuncs[id]?.resolve(result)
         delete ws.pendingFuncs[id]
@@ -73,8 +84,7 @@ async function messageReceived (handlers, message, ws) {
       if (method in handlers) {
         try {
           // run a function (will have an id) or procedure
-          let result = handlers[method](params, ws)
-          if (result instanceof Promise) result = await result
+          let result = await handlers[method](params, ws)
           if (id) ws.send(payload({ id, result }))
         } catch (err) {
           if (id) ws.send(payload({ id, error: { code: -32000, message: err.message } }))
