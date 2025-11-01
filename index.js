@@ -1,7 +1,6 @@
 // Simple RPC over WebSockets by Jake Gordon https://github.com/jakeg
-// partially conforms to JSON RPC 2.0 spec
-// https://en.wikipedia.org/wiki/JSON-RPC
-// https://www.jsonrpc.org/specification
+// partially conforms to JSON RPC 2.0 spec https://www.jsonrpc.org/specification
+export let config = { timeout: 30_000 }
 
 function payload (args) {
   return JSON.stringify({ jsonrpc: '2.0', ...args })
@@ -9,7 +8,7 @@ function payload (args) {
 
 export function wsClient (ws, handlers = {}) {
   ws.proc = (method, params) => remoteProc(method, params, ws)
-  ws.func = (method, params, timeout = 30_000) => remoteFunc(method, params, timeout, ws)
+  ws.func = (method, params, timeout) => remoteFunc(method, params, timeout ?? config.timeout, ws)
   ws.addEventListener('message', (msg) => messageReceived(handlers, msg.data, ws))
   return ws
 }
@@ -21,7 +20,7 @@ export function wsServer (serve, handlers, opt) {
   let origMessage = opt.websocket.message
   opt.websocket.open = (ws) => {
     ws.proc = (method, params) => remoteProc(method, params, ws)
-    ws.func = (method, params, timeout = 30_000) => remoteFunc(method, params, timeout, ws)
+    ws.func = (method, params, timeout) => remoteFunc(method, params, timeout ?? config.timeout, ws)
     ws.publishProc = (room, method, params) => publishProc(room, method, params, ws)
     if (origOpen) origOpen(ws)
   }
@@ -77,9 +76,10 @@ async function messageReceived (handlers, message, ws) {
       if (!method && id) {
         // return value from from remote function
         if (id in ws.pendingFuncs) {
-          if (error) ws.pendingFuncs[id]?.reject(new Error(error.message))
-          else ws.pendingFuncs[id]?.resolve(result)
+          let { resolve, reject } = ws.pendingFuncs[id]
           delete ws.pendingFuncs[id]
+          if (error) reject(new Error(error.message))
+          else resolve(result)
         }
       } else if (method) {
         if (method in handlers) {

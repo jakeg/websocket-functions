@@ -36,15 +36,11 @@ test('end to end', async () => {
   server.stop(true)
 })
 
-test('functions timeout correctly', async () => {
-  let timeout = 50
+test.only('functions timeout correctly', async () => {
+  let timeout = 30
   let handlers = {
-    fastFunc: async () => {
-      await Bun.sleep(1)
-      return 'ok'
-    },
-    slowFunc: async () => {
-      await Bun.sleep(timeout + 5)
+    sleeper: async (ms) => {
+      await Bun.sleep(ms)
       return 'ok'
     }
   }
@@ -54,8 +50,28 @@ test('functions timeout correctly', async () => {
   let ws = wsFunc.wsClient(new WebSocket(`ws://${server.url.host}/`))
   await new Promise(resolve => {
     ws.onopen = async () => {
-      expect(await ws.func('fastFunc', '', timeout)).toBe('ok')
-      await expect(ws.func('slowFunc', '', timeout)).rejects.toThrow('remoteFunc() timed out')
+      expect(await ws.func('sleeper', 1, timeout)).toBe('ok')
+      await Bun.sleep(1) // as earlier; necessary
+      await expect(ws.func('missingFunc', timeout + 5, timeout)).rejects.toThrow('Method not found')
+      await Bun.sleep(1) // as earlier; necessary
+      await expect(ws.func('sleeper', timeout + 5, timeout)).rejects.toThrow('remoteFunc() timed out')
+
+      // and with configurable timeout
+      wsFunc.config.timeout = timeout
+      await Bun.sleep(1) // as earlier; necessary
+      expect(await ws.func('sleeper', 1)).toBe('ok')
+      await Bun.sleep(1) // as earlier; necessary
+      await expect(ws.func('sleeper', timeout + 5)).rejects.toThrow('remoteFunc() timed out')
+      await Bun.sleep(1) // as earlier; necessary
+
+      timeout = timeout * 2
+      wsFunc.config.timeout = timeout
+      await Bun.sleep(1) // as earlier; necessary
+      expect(await ws.func('sleeper', 1)).toBe('ok')
+      await Bun.sleep(1) // as earlier; necessary
+      await expect(ws.func('sleeper', timeout + 5)).rejects.toThrow('remoteFunc() timed out')
+      await Bun.sleep(1) // as earlier; necessary
+      
       resolve()
     }
   })

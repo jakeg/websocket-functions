@@ -9,7 +9,7 @@ Abstract away those pesky messages and just invoke remote functions.
 
 Works with Bun (server and clients) and web clients.
 
-Under 3KB. Single file. No dependencies.
+Under 4KB. Single file. No dependencies.
 
 ## Install
 
@@ -162,6 +162,10 @@ Pass `Bun.serve` as the first argument, an object of functions callable by clien
 
 Provide functions which connected WebSocket clients can invoke over a WebSocket connection as the second argument, or an empty `{}` object if none required.
 
+### `wsFunc.config`
+
+A configuration object. Currently with just one property `timeout` that defaults to `30_000`ms. Change the value of `timeout` to set a global maximum time in ms before `ws.func()` calls are rejected. 
+
 ### `handlers` object
 
 An object of functions which can be provided to server or clients which can then be invoked by the other over a WebSocket connection, eg:
@@ -216,7 +220,7 @@ When called from the client, will invoke the given handler `method` on the serve
 
 An asynchronous function which returns a `Promise` which you should `await`. Once the other side of the WebSocket connection has a return value from the function, it will be sent back over the WebSocket connection and the `Promise` will resolve.
 
-The `Promise` will `reject()` if a response isn't received within `timeout` (default: `30_000`ms).
+The `Promise` will `reject()` if a response isn't received within `timeout` (default: `30_000`ms or whatever is set in `wsFunc.config.timeout`).
 
 Use `ws.proc()` as opposed to `ws.func()` when your method has no return value to prevent an unnecessary message being exchanged.
 
