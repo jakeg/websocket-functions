@@ -1,5 +1,4 @@
 // Simple RPC over WebSockets by Jake Gordon https://github.com/jakeg
-// partially conforms to JSON RPC 2.0 spec https://www.jsonrpc.org/specification
 export let config = { timeout: 30_000 }
 
 function payload (args) {
