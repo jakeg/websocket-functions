@@ -43,7 +43,7 @@ function publishProc (room, method, params, wsOrServer) {
 async function remoteFunc (method, params, timeout, ws) {
   if (!ws.nextFuncId) ws.nextFuncId = 1
   if (!ws.pendingFuncs) ws.pendingFuncs = {}
-  return new Promise ((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     let id = ws.nextFuncId++
     ws.pendingFuncs[id] = { resolve, reject }
     setTimeout(() => {
@@ -71,12 +71,13 @@ async function messageReceived (handlers, message, ws) {
       }
     } else if (method) {
       if (method in handlers) {
-        // run a function or procedure
-        let result = handlers[method](params, ws)
-        if (result instanceof Promise) result = await result
-        if (id) {
-          // a function, so send back returned value
-          ws.send(payload({ id, result }))
+        try {
+          // run a function (will have an id) or procedure
+          let result = handlers[method](params, ws)
+          if (result instanceof Promise) result = await result
+          if (id) ws.send(payload({ id, result }))
+        } catch (err) {
+          if (id) ws.send(payload({ id, error: { code: -32000, message: err.message } }))
         }
       } else {
         ws.send(payload({ id, error: { code: -32601, message: 'Method not found' } }))
