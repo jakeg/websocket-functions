@@ -3,9 +3,6 @@
 // https://en.wikipedia.org/wiki/JSON-RPC
 // https://www.jsonrpc.org/specification
 
-let nextFuncId = 1
-let pendingFuncs = {}
-
 let payload = (args) => JSON.stringify({ jsonrpc: '2.0', ...args })
 
 export function wsClient (ws, handlers = {}) {
@@ -44,12 +41,14 @@ function publishProc (room, method, params, wsOrServer) {
 }
 
 async function remoteFunc (method, params, timeout, ws) {
+  if (!ws.nextFuncId) ws.nextFuncId = 1
+  if (!ws.pendingFuncs) ws.pendingFuncs = {}
   return new Promise ((resolve, reject) => {
-    let id = nextFuncId++
-    pendingFuncs[id] = { resolve, reject }
+    let id = ws.nextFuncId++
+    ws.pendingFuncs[id] = { resolve, reject }
     setTimeout(() => {
-      if (id in pendingFuncs) {
-        delete pendingFuncs[id]
+      if (id in ws?.pendingFuncs) {
+        delete ws.pendingFuncs[id]
         reject(new Error('remoteFunc() timed out'))
       }
     }, timeout)
@@ -65,10 +64,10 @@ async function messageReceived (handlers, message, ws) {
   if (jsonrpc) {
     if (!method && id) {
       // return value from from remote function
-      if (id in pendingFuncs) {
-        if (error) pendingFuncs[id]?.reject(new Error(error.message))
-        else pendingFuncs[id]?.resolve(result)
-        delete pendingFuncs[id]
+      if (id in ws?.pendingFuncs) {
+        if (error) ws.pendingFuncs[id]?.reject(new Error(error.message))
+        else ws.pendingFuncs[id]?.resolve(result)
+        delete ws.pendingFuncs[id]
       }
     } else if (method) {
       if (method in handlers) {
