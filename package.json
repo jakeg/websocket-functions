@@ -1,6 +1,6 @@
 {
   "name": "websocket-functions",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Run functions over WebSockets",
   "main": "index.js",
   "type": "module",
